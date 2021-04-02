@@ -20,6 +20,8 @@ import feign.Feign;
 import feign.Target;
 
 /**
+ * 生成feign动态代理的工厂
+ *
  * @author Spencer Gibb
  */
 interface Targeter {

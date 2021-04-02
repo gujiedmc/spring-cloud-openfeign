@@ -30,6 +30,9 @@ import feign.Response;
 import org.springframework.cloud.netflix.ribbon.SpringClientFactory;
 
 /**
+ * 具有负载均衡功能的Feign Client，通过ribbon实现负载均衡。
+ * 基于装饰者模式实现的，实际内部处理委托给了 {@link #delegate}
+ * 执行http请求的时候，将请求交给了由Feign实现的Ribbon的LoadBalancer去执行http请求
  * @author Dave Syer
  *
  */
@@ -37,6 +40,7 @@ public class LoadBalancerFeignClient implements Client {
 
 	static final Request.Options DEFAULT_OPTIONS = new Request.Options();
 
+	// 实际委派的Client
 	private final Client delegate;
 
 	private CachingSpringLoadBalancerFactory lbClientFactory;
@@ -69,6 +73,9 @@ public class LoadBalancerFeignClient implements Client {
 		return URI.create(buffer.toString());
 	}
 
+	/**
+	 * 这里是feign ribbon的整合关键
+	 */
 	@Override
 	public Response execute(Request request, Request.Options options) throws IOException {
 		try {
@@ -80,7 +87,8 @@ public class LoadBalancerFeignClient implements Client {
 
 			IClientConfig requestConfig = getClientConfig(options, clientName);
 			return lbClient(clientName)
-					.executeWithLoadBalancer(ribbonRequest, requestConfig).toResponse();
+					.executeWithLoadBalancer(ribbonRequest, requestConfig)
+				.toResponse();
 		}
 		catch (ClientException e) {
 			IOException io = findIOException(e);

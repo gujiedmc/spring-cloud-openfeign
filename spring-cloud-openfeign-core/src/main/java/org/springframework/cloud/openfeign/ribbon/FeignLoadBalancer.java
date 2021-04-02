@@ -25,14 +25,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.netflix.client.AbstractLoadBalancerAwareClient;
-import com.netflix.client.ClientRequest;
-import com.netflix.client.IResponse;
-import com.netflix.client.RequestSpecificRetryHandler;
-import com.netflix.client.RetryHandler;
+import com.netflix.client.*;
 import com.netflix.client.config.IClientConfig;
 import com.netflix.loadbalancer.ILoadBalancer;
 import com.netflix.loadbalancer.Server;
+import com.netflix.loadbalancer.reactive.LoadBalancerCommand;
+import com.netflix.loadbalancer.reactive.ServerOperation;
 import feign.Client;
 import feign.Request;
 import feign.Response;
@@ -42,10 +40,13 @@ import org.springframework.cloud.netflix.ribbon.ServerIntrospector;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRequest;
+import rx.Observable;
 
 import static org.springframework.cloud.netflix.ribbon.RibbonUtils.updateToSecureConnectionIfNeeded;
 
 /**
+ * Feign实现的Ribbon的LoadBalancer
+ *
  * @author Dave Syer
  * @author Spencer Gibb
  * @author Ryan Baxter
@@ -77,11 +78,56 @@ public class FeignLoadBalancer extends
 		this.serverIntrospector = serverIntrospector;
 	}
 
+	/**
+	 *
+	 *
+	 * This method should be used when the caller wants to dispatch the request to a server chosen by
+	 * the load balancer, instead of specifying the server in the request's URI.
+	 * It calculates the final URI by calling {@link #reconstructURIWithServer(com.netflix.loadbalancer.Server, java.net.URI)}
+	 * and then calls {@link #executeWithLoadBalancer(ClientRequest, com.netflix.client.config.IClientConfig)}.
+	 *
+	 * @param request request to be dispatched to a server chosen by the load balancer. The URI can be a partial
+	 * URI which does not contain the host name or the protocol.
+	 */
+	@Override
+	public RibbonResponse executeWithLoadBalancer(final RibbonRequest request, final IClientConfig requestConfig) throws ClientException {
+		// return super.executeWithLoadBalancer(request, requestConfig);
+		LoadBalancerCommand<RibbonResponse> command = buildLoadBalancerCommand(request, requestConfig);
+
+		try {
+			return command.submit(
+				new ServerOperation<RibbonResponse>() {
+					@Override
+					public Observable<RibbonResponse> call(Server server) {
+						URI finalUri = reconstructURIWithServer(server, request.getUri());
+						RibbonRequest requestForServer = (RibbonRequest) request.replaceUri(finalUri);
+						try {
+							return Observable.just(FeignLoadBalancer.this.execute(requestForServer, requestConfig));
+						}
+						catch (Exception e) {
+							return Observable.error(e);
+						}
+					}
+				})
+				.toBlocking()
+				.single();
+		} catch (Exception e) {
+			Throwable t = e.getCause();
+			if (t instanceof ClientException) {
+				throw (ClientException) t;
+			} else {
+				throw new ClientException(e);
+			}
+		}
+
+	}
+
 	@Override
 	public RibbonResponse execute(RibbonRequest request, IClientConfig configOverride)
 			throws IOException {
 		Request.Options options;
 		if (configOverride != null) {
+			// 使用ribbon的配置覆写feign的部分参数
 			RibbonProperties override = RibbonProperties.from(configOverride);
 			options = new Request.Options(override.connectTimeout(this.connectTimeout),
 					override.readTimeout(this.readTimeout));
@@ -93,6 +139,12 @@ public class FeignLoadBalancer extends
 		return new RibbonResponse(request.getUri(), response);
 	}
 
+	/**
+	 * 获取重试的handler
+	 * @param request
+	 * @param requestConfig
+	 * @return
+	 */
 	@Override
 	public RequestSpecificRetryHandler getRequestSpecificRetryHandler(
 			RibbonRequest request, IClientConfig requestConfig) {

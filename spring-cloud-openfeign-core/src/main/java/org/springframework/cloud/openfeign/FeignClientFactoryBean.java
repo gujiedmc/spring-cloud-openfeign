@@ -133,6 +133,12 @@ public class FeignClientFactoryBean implements FactoryBean<Object>, Initializing
 		}
 	}
 
+	/**
+	 * 从配置文件和@FeignClient中配置的configuration加载配置到builder中。
+	 *
+	 * @param context
+	 * @param builder
+	 */
 	protected void configureFeign(FeignContext context, Feign.Builder builder) {
 		FeignClientProperties properties = beanFactory != null
 				? beanFactory.getBean(FeignClientProperties.class)
@@ -348,6 +354,8 @@ public class FeignClientFactoryBean implements FactoryBean<Object>, Initializing
 	}
 
 	/**
+	 * 创建FeignClient实现类
+	 *
 	 * @param <T> the target type of the Feign client
 	 * @return a {@link Feign} client created with the specified data and the context
 	 * information
@@ -358,6 +366,7 @@ public class FeignClientFactoryBean implements FactoryBean<Object>, Initializing
 				: applicationContext.getBean(FeignContext.class);
 		Feign.Builder builder = feign(context);
 
+		// url为空时需要设置负载均衡url
 		if (!StringUtils.hasText(url)) {
 			if (!name.startsWith("http")) {
 				url = "http://" + name;
@@ -369,6 +378,7 @@ public class FeignClientFactoryBean implements FactoryBean<Object>, Initializing
 			return (T) loadBalance(builder, context,
 					new HardCodedTarget<>(type, name, url));
 		}
+		// url已经设置时，需要设置底层的http工具
 		if (StringUtils.hasText(url) && !url.startsWith("http")) {
 			url = "http://" + url;
 		}

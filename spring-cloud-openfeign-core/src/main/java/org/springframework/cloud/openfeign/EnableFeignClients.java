@@ -25,6 +25,9 @@ import java.lang.annotation.Target;
 import org.springframework.context.annotation.Import;
 
 /**
+ * 启动Feign代理。
+ * 装配的逻辑在通过@Import引入的{@link FeignClientsRegistrar}中
+ *
  * Scans for interfaces that declare they are feign clients (via
  * {@link org.springframework.cloud.openfeign.FeignClient} <code>@FeignClient</code>).
  * Configures component scanning directives for use with
