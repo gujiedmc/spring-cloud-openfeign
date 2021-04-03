@@ -60,6 +60,10 @@ import org.springframework.format.support.FormattingConversionService;
 import static feign.form.ContentType.MULTIPART;
 
 /**
+ * 为每个FeignClient进行单独装配，在{@link FeignContext#FeignContext()}初始化时配置。
+ *
+ * 在每个FeignClient创建是单独初始化本配置类
+ *
  * @author Dave Syer
  * @author Venil Noronha
  * @author Darren Foong

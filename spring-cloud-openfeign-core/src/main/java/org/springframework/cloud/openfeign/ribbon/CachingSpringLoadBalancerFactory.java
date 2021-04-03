@@ -27,6 +27,8 @@ import org.springframework.cloud.netflix.ribbon.SpringClientFactory;
 import org.springframework.util.ConcurrentReferenceHashMap;
 
 /**
+ * FeignLoadBalancer的工厂。
+ *
  * Factory for SpringLoadBalancer instances that caches the entries created.
  *
  * @author Spencer Gibb

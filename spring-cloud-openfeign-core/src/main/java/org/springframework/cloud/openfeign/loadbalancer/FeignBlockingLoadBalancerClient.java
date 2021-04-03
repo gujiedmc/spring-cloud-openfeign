@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import feign.Client;
 import feign.Request;
 import feign.Response;
+import feign.httpclient.ApacheHttpClient;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -32,6 +33,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 
 /**
+ * 具有负载均衡功能的 feign Client实现，通过Spring Cloud LoadBalancer实现。
+ * 基于装饰者模式，内部委派了一个基于Http工具类的Client，例如基于ApacheHttpClient的
+ * {@link ApacheHttpClient}。
+ *
  * A {@link Client} implementation that uses {@link BlockingLoadBalancerClient} to select
  * a {@link ServiceInstance} to use while resolving the request host.
  *

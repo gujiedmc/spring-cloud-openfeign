@@ -303,6 +303,9 @@ public class FeignClientFactoryBean implements FactoryBean<Object>, Initializing
 		}
 	}
 
+	/**
+	 * 从每个feign独立的context中获取bean
+	 */
 	protected <T> T get(FeignContext context, Class<T> type) {
 		T instance = context.getInstance(contextId, type);
 		if (instance == null) {
@@ -312,10 +315,16 @@ public class FeignClientFactoryBean implements FactoryBean<Object>, Initializing
 		return instance;
 	}
 
+	/**
+	 * 从父context获取bean
+	 */
 	protected <T> T getOptional(FeignContext context, Class<T> type) {
 		return context.getInstance(contextId, type);
 	}
 
+	/**
+	 * 如果设置从父类继承则从父context中获取bean
+	 */
 	protected <T> T getInheritedAwareOptional(FeignContext context, Class<T> type) {
 		if (inheritParentContext) {
 			return getOptional(context, type);

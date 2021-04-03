@@ -64,6 +64,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 
 /**
+ * feign自动装配入口
+ *
  * @author Spencer Gibb
  * @author Julien Roy
  * @author Grzegorz Poznachowski

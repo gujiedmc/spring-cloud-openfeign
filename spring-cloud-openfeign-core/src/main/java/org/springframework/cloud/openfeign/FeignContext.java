@@ -24,7 +24,7 @@ import org.springframework.cloud.context.named.NamedContextFactory;
 import org.springframework.lang.Nullable;
 
 /**
- * Feign的独立Spring ApplicationContext，每个Feign Client都有自己独立的ApplicationContext，使用client name区分context
+ * Feign的独立Spring ApplicationContext，每个Feign Client都有自己独立的ApplicationContext，使用feign name区分context
  *
  * A factory that creates instances of feign classes. It creates a Spring
  * ApplicationContext per client name, and extracts the beans that it needs from there.
