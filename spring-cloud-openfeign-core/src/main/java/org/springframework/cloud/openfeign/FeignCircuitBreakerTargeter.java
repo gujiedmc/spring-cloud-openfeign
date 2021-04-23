@@ -22,6 +22,10 @@ import feign.Target;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.util.StringUtils;
 
+/***
+ * 创建feign代理的工厂。
+ * 支持基于SpringCloud中对断路实现器CircuitBreaker的定义，及feign实现。
+ */
 @SuppressWarnings("unchecked")
 class FeignCircuitBreakerTargeter implements Targeter {
 

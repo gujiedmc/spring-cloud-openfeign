@@ -25,12 +25,24 @@ import feign.hystrix.SetterFactory;
 import org.springframework.util.StringUtils;
 
 /**
+ * 生成feign动态代理的工厂，整合hystrix。
+ * 在 {@link FeignAutoConfiguration.HystrixFeignTargeterConfiguration}中装配
+ *
  * @author Spencer Gibb
  * @author Erik Kringen
  */
 @SuppressWarnings("unchecked")
 class HystrixTargeter implements Targeter {
 
+	/**
+	 * 创建feign代理
+	 * @param factory 构建feign代理bean 的工厂。
+	 * @param feign 参数构造器。{@link FeignClientsConfiguration.HystrixFeignConfiguration#feignHystrixBuilder}中注入
+	 * @param context feign上下文，包含了每个Feign独有的context
+	 * @param target 代理目标信息。
+	 * @param <T> 代理目标类型。
+	 * @return
+	 */
 	@Override
 	public <T> T target(FeignClientFactoryBean factory, Feign.Builder feign,
 			FeignContext context, Target.HardCodedTarget<T> target) {
@@ -40,20 +52,24 @@ class HystrixTargeter implements Targeter {
 		feign.hystrix.HystrixFeign.Builder builder = (feign.hystrix.HystrixFeign.Builder) feign;
 		String name = StringUtils.isEmpty(factory.getContextId()) ? factory.getName()
 				: factory.getContextId();
+		// 创建 Hystrix 参数配置器
 		SetterFactory setterFactory = getOptional(name, context, SetterFactory.class);
 		if (setterFactory != null) {
 			builder.setterFactory(setterFactory);
 		}
+		// 如果指定Fallback类，则直接使用fallback类，每个FeignClient fallback独立
 		Class<?> fallback = factory.getFallback();
 		if (fallback != void.class) {
 			return targetWithFallback(name, context, target, builder, fallback);
 		}
+		// 使用Fallback工厂，每个FeignClient工厂独立
 		Class<?> fallbackFactory = factory.getFallbackFactory();
 		if (fallbackFactory != void.class) {
 			return targetWithFallbackFactory(name, context, target, builder,
 					fallbackFactory);
 		}
 
+		// 走feign流程创建代理
 		return feign.target(target);
 	}
 
